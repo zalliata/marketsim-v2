@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "marketsim-v2"
+version = "2.0.0"
+description = "Crisis-calibrated multi-agent market simulator for the SVB dissertation programme"
+authors = [{ name = "Zorina Alliata" }]
+requires-python = ">=3.10"
+dependencies = []          # core runs on the standard library
+
+[project.optional-dependencies]
+supabase = ["supabase>=2.0"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+marketsim = "marketsim.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["marketsim*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
