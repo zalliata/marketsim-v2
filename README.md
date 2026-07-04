@@ -55,6 +55,14 @@ working. Force with `--storage local` or `--storage supabase`.
 Every run is seeded; batch iteration *i* uses `seed + i`; scripted-LLM and RL
 exploration draw only from the seeded generator. Same seed → identical output.
 
+## Running scenarios in the cloud (Google Colab)
+This is a batch simulation package, **not** a web app — it does not deploy to Vercel/Netlify
+(those run code for seconds; the sweeps run for minutes to hours). To run the P3/P5/P6
+batteries without tying up your own machine, open `notebooks/run_on_colab.ipynb` in
+[Google Colab](https://colab.research.google.com) (File → Open notebook → GitHub → paste the
+repo URL). It clones the repo, installs the package, runs any scenario or sweep, and saves the
+result CSVs to your Google Drive or Supabase. No server setup, handles long jobs.
+
 ## Tests
 ```bash
 pytest        # order book, signals, Q-learning, scenario registry, determinism, smoke runs
