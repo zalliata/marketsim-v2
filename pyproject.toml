@@ -22,3 +22,6 @@ include = ["marketsim*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.vercel]
+entrypoint = "my_package.api:app"
