@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import math
 import random
+import zlib
 
 from .cohort import SYMBOLS, DCC_GARCH_VOLATILITIES
 
@@ -61,7 +62,7 @@ def anchor_path(symbol: str, n_ticks: int, seed: int = 0) -> list[float]:
         return path[:n_ticks]
 
     # ── extension: GARCH(1,1)-like process, seeded ─────────────────────
-    rng = random.Random((seed << 8) ^ hash(symbol) & 0xFFFFFFFF)
+    rng = random.Random((seed << 8) ^ zlib.crc32(symbol.encode()))  # stable across processes
     daily_vol = max(1e-4, DCC_GARCH_VOLATILITIES[symbol] / 10.0)  # temper P0 crisis forecast
     tick_vol = daily_vol / math.sqrt(TICKS_PER_DAY)
     omega, alpha, beta = tick_vol**2 * 0.05, 0.10, 0.85

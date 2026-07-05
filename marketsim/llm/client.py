@@ -45,6 +45,19 @@ class ScriptedClient:
         self.rng = random.Random(seed ^ 0xADE5)
 
     def decide(self, system_prompt: str, state: dict) -> dict:
+        d = self._policy(state)
+        # P3 cost gate — applied AFTER the policy (all rng draws already made,
+        # so the random stream is identical at every tc_bps grid point).
+        # Strict '>' keeps tc=0 behaviour bit-identical to the fee-blind runs.
+        cost = float(state.get("round_trip_cost_bps", 0.0))
+        edge = float(state.get("expected_edge_bps", 0.0))
+        if d.get("action") != "hold" and cost > edge:
+            return {"action": "hold", "symbol": d.get("symbol"), "quantity": 0,
+                    "rationale": f"scripted: round-trip cost {cost:.1f}bps "
+                                 f"exceeds expected edge {edge:.1f}bps"}
+        return d
+
+    def _policy(self, state: dict) -> dict:
         s = state
         sym = s.get("target_symbol", "SIVB")
         sent = float(s.get("sentiment", 0.0))

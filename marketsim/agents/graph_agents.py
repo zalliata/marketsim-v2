@@ -37,6 +37,8 @@ class HubAttacker(Agent):
         # attack hardest when crisis + negative sentiment (max cascade leverage)
         if not (view.is_crisis or view.sentiment < -0.2):
             return []
+        if self.fee_gated(view, hub):     # P3: round-trip cost > expected edge
+            return []
         book = view.books[hub]
         ref = book.best_bid or view.prices[hub]
         slip = float(self.config.get("max_slippage", 0.01))
@@ -57,6 +59,8 @@ class PathwayExploiter(Agent):
         for sym in targets:
             if view.sentiment >= 0 and not view.is_crisis:
                 continue
+            if self.fee_gated(view, sym):  # P3: round-trip cost > expected edge
+                continue
             ref = view.books[sym].best_bid or view.prices[sym]
             orders.append(Order(self.agent_id, sym, Side.SELL, size, OrderType.LIMIT,
                                 round(ref * (1 - slip), 4),
@@ -74,6 +78,8 @@ class CrossSectorAmplifier(Agent):
         orders = []
         for sym in periphery:
             if self.rng.random() > 0.5:
+                continue
+            if self.fee_gated(view, sym):  # P3: round-trip cost > expected edge
                 continue
             side = Side.SELL if view.sentiment < 0 else Side.BUY
             ref = ((view.books[sym].best_bid if side == Side.SELL else view.books[sym].best_ask)

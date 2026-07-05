@@ -57,6 +57,11 @@ class AdversarialLLMAgent(Agent):
             "base_size": int(self.config.get("base_size", 100)),
             "volatility_weight": self.vw,
             "profit_weight": self.pw,
+            # P3 / RQ-F4: cost awareness — genuine-LLM runs see the fee in the
+            # prompt; ScriptedClient applies a deterministic cost gate on it.
+            "tc_bps": view.tc_bps,
+            "round_trip_cost_bps": 2.0 * view.tc_bps,
+            "expected_edge_bps": round(self.gross_edge_bps(view, sym), 2),
         }
         if self.info.sentiment:
             state["sentiment"] = round(view.sentiment, 3)

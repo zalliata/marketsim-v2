@@ -9,6 +9,7 @@ sentiment access receives `sentiment = 0.0` and cannot cheat.
 from __future__ import annotations
 
 import random
+import zlib
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -39,6 +40,7 @@ class MarketView:
     account: AgentAccount
     graph_enabled: bool
     messages: list[dict] = field(default_factory=list)  # peer messages, if permitted
+    tc_bps: float = 0.0                       # per-side transaction cost (P3 sweep)
 
 
 class Agent:
@@ -52,7 +54,9 @@ class Agent:
         self.agent_type = agent_type
         self.initial_cash = initial_cash
         self.info = info or InfoAccess()
-        self.rng = random.Random(seed ^ hash(agent_id) & 0xFFFFFFFF)
+        # zlib.crc32, NOT hash(): str hash is salted per process, which silently
+        # broke cross-session reproducibility of seeded runs.
+        self.rng = random.Random(seed ^ zlib.crc32(agent_id.encode()))
         self.config = config or {}
         self.outbox: list[dict] = []          # messages posted this tick
 
@@ -72,6 +76,7 @@ class Agent:
             account=market.accounts[self.agent_id],
             graph_enabled=self.info.graph_features,
             messages=messages if self.info.peer_messages else [],
+            tc_bps=market.config.tc_bps,
         )
 
     def on_tick(self, view: MarketView) -> list[Order]:
@@ -93,3 +98,24 @@ class Agent:
         if px <= 0:
             return 0
         return max(0, min(qty, int(view.account.cash / px)))
+
+    # ── transaction-cost awareness (P3 / RQ-F4) ───────────────────────────
+    def gross_edge_bps(self, view: MarketView, symbol: str) -> float:
+        """Expected per-share capture (bps) from trading `symbol` this tick.
+
+        Proxy: current realized volatility of the symbol scaled by
+        `edge_capture` (config; fraction/multiple of the per-tick vol the
+        strategy expects to monetise). Calibrate `edge_capture` so that the
+        implied deterrence threshold tc* is a *result*, not an assumption —
+        report sensitivity to it in the paper.
+        """
+        capture = float(self.config.get("edge_capture", 8.0))
+        return view.realized_vol.get(symbol, 0.0) * 10_000.0 * capture
+
+    def fee_gated(self, view: MarketView, symbol: str) -> bool:
+        """True when the round-trip fee exceeds the expected edge.
+
+        Strict inequality: with tc_bps == 0 nothing is gated, so tc=0 runs
+        reproduce the fee-blind baseline exactly (same seeds, same trades).
+        """
+        return 2.0 * view.tc_bps > self.gross_edge_bps(view, symbol)
