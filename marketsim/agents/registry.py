@@ -102,13 +102,18 @@ REGISTRY: dict[str, AgentSpec] = {
 
 
 def build_agent(agent_id: str, seed: int, overrides: Optional[dict] = None,
-                llm_client=None) -> Agent:
+                llm_client=None, instance_id: Optional[str] = None) -> Agent:
+    """Build an agent from its registry base id. ``instance_id`` overrides the
+    agent's id when replicating a type into a population (composition sweeps);
+    the distinct id gives each replica its own seeded RNG stream, so replicas
+    are independent and the run stays deterministic."""
     spec = REGISTRY[agent_id]
     cfg = dict(spec.config)
     if overrides:
         cfg.update(overrides)
-    kwargs = dict(agent_id=spec.id, name=spec.name, agent_type=spec.agent_type,
-                  initial_cash=spec.cash, info=spec.info, seed=seed, config=cfg)
+    kwargs = dict(agent_id=instance_id or spec.id, name=spec.name,
+                  agent_type=spec.agent_type, initial_cash=spec.cash,
+                  info=spec.info, seed=seed, config=cfg)
     if spec.agent_type == "adversarial_llm":
         return spec.factory(**kwargs, llm_client=llm_client)
     return spec.factory(**kwargs)

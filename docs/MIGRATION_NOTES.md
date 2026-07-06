@@ -50,13 +50,24 @@
 | Graph exploiters/defenders | Heuristics on the contagion matrix; idea sound | Ported with explicit centrality/contagion helpers and book execution |
 | Scenario controller | Scattered across edge functions | One class with a timed event schedule + P3 circuit-breaker trigger |
 
+## Resolved refinements
+- **P6 composition axis (done, July 2026).** Paper 5 empirically confirmed that
+  the capital-based `adversary_share` knob is footprint-invariant: detection and
+  order-flow footprint did not change from 1% to 50% capital, because adversary
+  order sizing is fixed. P6 therefore now sweeps `composition_share` — the
+  adversarial fraction of the *trading population*. `run_once` replicates noise
+  and adversary agents to a fixed 20-trader population at the target fraction,
+  holding market-maker / defender infrastructure fixed, so the adversarial share
+  of order flow genuinely grows with the sweep (validated in
+  `tests/test_composition.py`). The capital `adversary_share` path is retained
+  for the P5 sweeps. Monoculture vs diversity is expressed by the roster's
+  adversary set (one type vs several), which the replication cycles.
+
 ## Known refinements deferred to the next session
-- **Share-sweep order mass.** P5/P6 share is currently scaled via adversary
-  capital; adversary *order sizing* should also scale with share so that market
-  impact grows with participation. The plumbing (the `adversary_share` parameter
-  and its logging) is in place; the sizing hook is a small change in the agent
-  base class.
 - **RL retraining artefact.** `p4-pretrain-rl` will produce the canonical
   Q-table; the transfer scenarios consume it. Needs a longer training batch.
 - **Distribution validation.** Re-run `rq2-adversary-enters` and one p4-*
   scenario at 100 iterations and compare against the v1 Supabase exports.
+- **P5 capital-share note.** The P5 `adversary_share` sweeps remain on the
+  capital axis by design (that is what produced the footprint-invariance
+  finding); no change needed.

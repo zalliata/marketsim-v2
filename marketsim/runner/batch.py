@@ -45,19 +45,27 @@ def _agg(scenario_id, results, grid_key="", grid_value=0.0) -> BatchStats:
 
 def run_batch(scenario: Scenario, iterations: int, backend, base_seed: int = 0,
               llm_mode: str = "scripted", tc_bps=None, adversary_share=None,
-              run_id: str | None = None, baseline_peak_vol=None) -> BatchStats:
+              composition_share=None, run_id: str | None = None,
+              baseline_peak_vol=None) -> BatchStats:
     run_id = run_id or f"{scenario.id}-{uuid.uuid4().hex[:8]}"
-    agent_types = {aid: REGISTRY[aid].agent_type for aid in scenario.agent_ids}
     label = scenario.labels.get("regime", "")
     results = []
     for i in range(iterations):
         res = run_once(scenario, seed=base_seed + i, llm_mode=llm_mode,
                        tc_bps=tc_bps, adversary_share=adversary_share,
+                       composition_share=composition_share,
                        baseline_peak_vol=baseline_peak_vol)
-        backend.write_run(run_id, i, res, agent_types, label=label)
+        # res.agent_types covers replicated instance ids (composition sweeps)
+        backend.write_run(run_id, i, res, res.agent_types, label=label)
         results.append(res)
-    gk = "tc_bps" if tc_bps is not None else ("adversary_share" if adversary_share is not None else "")
-    gv = tc_bps if tc_bps is not None else (adversary_share if adversary_share is not None else 0.0)
+    if tc_bps is not None:
+        gk, gv = "tc_bps", tc_bps
+    elif composition_share is not None:
+        gk, gv = "composition_share", composition_share
+    elif adversary_share is not None:
+        gk, gv = "adversary_share", adversary_share
+    else:
+        gk, gv = "", 0.0
     return _agg(scenario.id, results, gk, gv or 0.0)
 
 
@@ -74,6 +82,8 @@ def run_sweep(scenario: Scenario, iterations: int, backend, base_seed: int = 0,
             kwargs["tc_bps"] = val
         elif axis.kind == "adversary_share":
             kwargs["adversary_share"] = val
+        elif axis.kind == "composition_share":
+            kwargs["composition_share"] = val   # P6: adversarial population fraction
         elif axis.kind == "breaker":
             # arms: 0 = no intervention, 1 = FTT at tc*, 2 = circuit-breaker halt
             arm = int(val)

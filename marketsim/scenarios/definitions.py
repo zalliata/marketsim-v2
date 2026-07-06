@@ -200,24 +200,35 @@ _add(Scenario("p5-share-sweep-graph", "P5: Detection Feasibility Sweep (graph)",
               sweep=SweepAxis("adversary_share",
                               [0.01, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.40, 0.50])))
 
-# P6 / RQ-F7 — composition sweep & monoculture vs diversity
+# P6 / RQ-F7 — composition sweep & monoculture vs diversity.
+# These sweep the ADVERSARIAL POPULATION FRACTION (composition_share), not
+# capital: noise and adversary agents are replicated to a fixed 20-trader
+# population so the adversarial share of order flow genuinely grows, holding the
+# market-maker / defender infrastructure (P2, P4, D1) fixed. Paper 5 showed the
+# capital axis is footprint-invariant, so the population axis is the correct one
+# for the phase-transition question. Grids start at 0.0 (clean baseline).
+_COMP_GRID = [0.0, 0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50]
+_COMP_GRID_COARSE = [0.0, 0.05, 0.10, 0.20, 0.30, 0.40, 0.50]
 _add(Scenario("p6-composition-sweep", "P6: Algorithmic Composition Sweep",
-              "Vary adversarial share 5-50% across the defended arena; locate the "
-              "phase transition where stabilisation breaks down (RQ-F7 H1).",
+              "Grow the adversarial share of the trading population 0-50% across the "
+              "defended arena; locate the phase transition where stabilisation breaks "
+              "down (RQ-F7 H1).",
               ["Z1", "Z2", "A1", "A2", "G1", "P2", "P4", "D1"], paper="P6/RQ-F7",
-              sweep=SweepAxis("adversary_share",
-                              [0.05, 0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50])))
+              labels={"population_size": 20},
+              sweep=SweepAxis("composition_share", _COMP_GRID)))
 _add(Scenario("p6-monoculture", "P6: Monoculture Adversary",
-              "Single dominant adversary strategy at each share level (RQ-F7 H2).",
-              ["Z1", "Z2", "A1", "P2", "P4"], paper="P6/RQ-F7",
-              sweep=SweepAxis("adversary_share",
-                              [0.05, 0.10, 0.20, 0.30, 0.40, 0.50])))
+              "A single dominant adversary strategy (hub attacker) fills the adversarial "
+              "population at each share level (RQ-F7 H2).",
+              ["Z1", "Z2", "G1", "P2", "P4"], paper="P6/RQ-F7",
+              labels={"population_size": 20},
+              sweep=SweepAxis("composition_share", _COMP_GRID_COARSE)))
 _add(Scenario("p6-diversity", "P6: Mixed-Strategy Adversary",
-              "Diverse adversary mix at each share level; expected to delay the phase "
-              "transition vs monoculture (RQ-F7 H2).",
+              "A diverse adversary mix (volatility A1-A2 + graph G1, G3) fills the "
+              "adversarial population; expected to delay the phase transition vs "
+              "monoculture (RQ-F7 H2).",
               ["Z1", "Z2", "A1", "A2", "G1", "G3", "P2", "P4"], paper="P6/RQ-F7",
-              sweep=SweepAxis("adversary_share",
-                              [0.05, 0.10, 0.20, 0.30, 0.40, 0.50])))
+              labels={"population_size": 20},
+              sweep=SweepAxis("composition_share", _COMP_GRID_COARSE)))
 
 
 SCENARIOS = _S
