@@ -152,9 +152,10 @@ _add(Scenario("p3-cost-sweep-adversary", "P3: Transaction-Cost Sweep (LLM advers
               "Sweep tc 0-50 bps against coordinated LLM adversaries; find tc* where "
               "mean adversary PnL < 0 (RQ-F4).",
               ["Z1", "Z2", "A1", "A2", "A3", "P2"], paper="P3/RQ-F4",
-              # 1 bps refinement over the zero-crossing bracket found by the
-              # coarse 0-50 x 5 bps pass (crossing ~35-50 bps, n=100/point)
-              sweep=SweepAxis("tc_bps", frange(35, 50, 1))))
+              # full paper grid: coarse 0-50 x 5 bps plus 1 bps refinement over
+              # the 35-50 bps zero-crossing bracket — one run = complete dataset
+              sweep=SweepAxis("tc_bps",
+                              sorted(set(frange(0, 50, 5) + frange(35, 50, 1))))))
 _add(Scenario("p3-cost-sweep-graph", "P3: Transaction-Cost Sweep (graph exploiters)",
               "Sweep tc 0-50 bps against graph exploiters (P2's 10bp result is one grid point).",
               ["Z1", "Z2", "G1", "G2", "G3", "D1"], paper="P3/RQ-F4",
