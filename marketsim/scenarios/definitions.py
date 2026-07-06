@@ -231,6 +231,24 @@ _add(Scenario("p6-diversity", "P6: Mixed-Strategy Adversary",
               sweep=SweepAxis("composition_share", _COMP_GRID_COARSE)))
 
 
+# ── Genuine-LLM adversary experiment (run these with --llm anthropic) ──
+# A single adversary in the fully defended market. Run once with --llm scripted
+# and once with a real provider for the head-to-head; the LLM sees the fee and
+# its expected edge in the prompt and can strategise around them. Kept small
+# (one adversary) to bound API cost.
+_add(Scenario("llm-adversary-defended", "Genuine-LLM adversary vs defended market",
+              "One volatility-maximising adversary against the full liquidity stack; "
+              "scripted-vs-real head-to-head for P1 and P6.",
+              ["Z1", "Z2", "A1", "P2", "P4", "D1"], paper="P1/P6",
+              agent_overrides={"A1": {"base_size": 150}}))
+_add(Scenario("llm-adversary-composition", "Genuine-LLM composition mini-sweep",
+              "Adversarial population share 0-40% in the defended market with a real "
+              "LLM adversary; short grid to bound API cost.",
+              ["Z1", "Z2", "A1", "A2", "P2", "P4", "D1"], paper="P6/RQ-F7",
+              labels={"population_size": 20},
+              sweep=SweepAxis("composition_share", [0.0, 0.10, 0.25, 0.40])))
+
+
 SCENARIOS = _S
 
 
