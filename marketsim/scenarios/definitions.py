@@ -159,8 +159,11 @@ _add(Scenario("p3-cost-sweep-graph", "P3: Transaction-Cost Sweep (graph exploite
               sweep=SweepAxis("tc_bps", frange(0, 50, 5))))
 _add(Scenario("p3-circuit-breaker", "P3: Circuit Breaker vs FTT",
               "Compare intervention arms at a common stress trigger (RQ-F4 welfare).",
-              ["Z1", "Z2", "A1", "A2", "P2"], paper="P3/RQ-F4",
-              controller_config={"breaker": {"symbol": "SIVB", "drawdown_trigger": 0.15,
+              # full A1-A3 roster: same adversary config the cost sweep used to
+              # locate tc*, so the FTT arm is evaluated against the threat that
+              # priced it; 0.15 trigger never fired with the lighter roster
+              ["Z1", "Z2", "A1", "A2", "A3", "P2"], paper="P3/RQ-F4",
+              controller_config={"breaker": {"symbol": "SIVB", "drawdown_trigger": 0.08,
                                              "halt_ticks": 13}},
               labels={"ftt_tc_bps": 40.0},   # tc* from the cost sweep — update after 1 bps refinement
               sweep=SweepAxis("breaker", [0, 1, 2],
