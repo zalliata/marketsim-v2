@@ -1,3 +1,6 @@
+THIS VERSION WAS USED FOR PAPER3 results.
+
+
 # marketsim-v2
 
 A crisis-calibrated multi-agent market simulator for the dissertation programme
