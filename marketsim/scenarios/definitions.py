@@ -162,6 +162,7 @@ _add(Scenario("p3-circuit-breaker", "P3: Circuit Breaker vs FTT",
               ["Z1", "Z2", "A1", "A2", "P2"], paper="P3/RQ-F4",
               controller_config={"breaker": {"symbol": "SIVB", "drawdown_trigger": 0.15,
                                              "halt_ticks": 13}},
+              labels={"ftt_tc_bps": 40.0},   # tc* from the cost sweep — update after 1 bps refinement
               sweep=SweepAxis("breaker", [0, 1, 2],
                               labels=["no-intervention", "ftt-at-tc*", "halt"])))
 

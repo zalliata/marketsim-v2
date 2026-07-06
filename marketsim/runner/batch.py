@@ -69,15 +69,22 @@ def run_sweep(scenario: Scenario, iterations: int, backend, base_seed: int = 0,
     out: list[BatchStats] = []
     for j, val in enumerate(axis.values):
         kwargs = {}
+        sc_run = scenario          # per-arm copy; never rebind the sweep base
         if axis.kind == "tc_bps":
             kwargs["tc_bps"] = val
         elif axis.kind == "adversary_share":
             kwargs["adversary_share"] = val
         elif axis.kind == "breaker":
-            # arm 2 = circuit-breaker halt; arms 0/1 disable dynamic halt
-            if int(val) != 2:
-                scenario = Scenario(**{**scenario.__dict__, "controller_config": {}})
+            # arms: 0 = no intervention, 1 = FTT at tc*, 2 = circuit-breaker halt
+            arm = int(val)
+            if arm != 2:           # only the halt arm keeps the dynamic breaker
+                sc_run = Scenario(**{**scenario.__dict__, "controller_config": {}})
+            if arm == 1:           # FTT arm: same market, cost floor at tc*
+                kwargs["tc_bps"] = float(scenario.labels.get("ftt_tc_bps",
+                                                             scenario.tc_bps))
         rid = f"{scenario.id}-{axis.kind}{val}-{base_seed}"
-        out.append(run_batch(scenario, iterations, backend, base_seed, llm_mode,
-                             run_id=rid, **kwargs))
+        st = run_batch(sc_run, iterations, backend, base_seed, llm_mode,
+                       run_id=rid, **kwargs)
+        st.grid_key, st.grid_value = axis.kind, float(val)  # honest sweep labels
+        out.append(st)
     return out
